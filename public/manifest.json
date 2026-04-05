@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Ollama Persona Agent",
+  "description": "AI-powered translation with customizable Personas via Ollama LLM",
+  "version": "1.0.0",
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "activeTab",
+    "scripting",
+    "contextMenus"
+  ],
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Ollama Persona Agent"
+  }
+}
