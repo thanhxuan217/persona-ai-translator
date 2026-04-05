@@ -65,11 +65,19 @@ export class PersonaStorage {
     }
 
     // Ensure config defaults
+    const rawConfig = persona.config || {}
+    // Normalize type variants that AI might return
+    const normalizedType = (() => {
+      const t = (rawConfig.type || 'local').toLowerCase()
+      if (t.includes('cloud') || t.includes('api')) return 'cloud'
+      return 'local'
+    })()
     persona.config = {
-      type: 'local',
-      url: 'http://localhost:11434',
+      type: normalizedType,
+      url: normalizedType === 'cloud' ? (rawConfig.url || '') : 'http://localhost:11434',
       model: 'translategemma:latest',
-      ...(persona.config || {})
+      ...(rawConfig.url ? { url: rawConfig.url } : {}),
+      ...(rawConfig.model ? { model: rawConfig.model } : {})
     }
 
     const index = personas.findIndex(p => p.id === persona.id)

@@ -18,6 +18,14 @@
       @retranslate="retranslate"
     />
 
+    <!-- Options -->
+    <div class="px-3 pb-2 flex justify-end">
+      <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer hover:text-slate-200 transition-colors">
+        <input type="checkbox" v-model="autoFillEnabled" class="rounded border-slate-700 bg-slate-800 text-accent-purple focus:ring-accent-purple/30 focus:ring-offset-0">
+        <span>Tự động điền text đã bôi đen</span>
+      </label>
+    </div>
+
     <!-- Input -->
     <ChatInput
       ref="inputRef"
@@ -48,6 +56,7 @@ const conversation = new ConversationManager()
 const displayMessages = ref([])
 const lastTranslation = ref(null)
 const inputRef = ref(null)
+const autoFillEnabled = ref(true)
 
 // ---- Lifecycle ----
 onMounted(() => {
@@ -56,6 +65,10 @@ onMounted(() => {
   }
   if (props.pendingTranslation) {
     handlePendingTranslation(props.pendingTranslation)
+  }
+  const savedAutoFill = localStorage.getItem('autoFillEnabled')
+  if (savedAutoFill !== null) {
+    autoFillEnabled.value = savedAutoFill === 'true'
   }
 })
 
@@ -74,7 +87,7 @@ const handlePendingTranslation = async (val) => {
   if (val && val.selectedText) {
     if (val.autoTranslate) {
       await translateText(val.selectedText, val.contextText)
-    } else {
+    } else if (autoFillEnabled.value) {
       nextTick(() => {
         inputRef.value?.setText(val.selectedText)
       })
@@ -82,6 +95,10 @@ const handlePendingTranslation = async (val) => {
     emit('clear-pending')
   }
 }
+
+watch(autoFillEnabled, (val) => {
+  localStorage.setItem('autoFillEnabled', val)
+})
 
 watch(() => props.pendingTranslation, handlePendingTranslation)
 

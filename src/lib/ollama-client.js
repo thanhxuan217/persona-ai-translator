@@ -24,12 +24,12 @@ export class OllamaClient {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: options.model || this.model,
+        model: (options && options.model) || this.model || 'translategemma:latest',
         messages,
         stream: true,
         options: {
-          temperature: options.temperature ?? 0.7,
-          ...(options.options || {})
+          temperature: (options && options.temperature) ?? 0.7,
+          ...((options && options.options) || {})
         }
       }),
       signal: this.abortController.signal
@@ -80,12 +80,12 @@ export class OllamaClient {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: options.model || this.model,
+        model: (options && options.model) || this.model || 'translategemma:latest',
         messages,
         stream: false,
         options: {
-          temperature: options.temperature ?? 0.7,
-          ...(options.options || {})
+          temperature: (options && options.temperature) ?? 0.7,
+          ...((options && options.options) || {})
         }
       })
     })

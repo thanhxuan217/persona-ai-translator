@@ -6,7 +6,7 @@
       :messages="displayMessages"
       :isStreaming="ollama.isStreaming.value"
       :streamingText="ollama.streamingText.value"
-      welcomeText="Xin chào! Tôi sẽ giúp bạn tạo một Persona dịch thuật cá nhân qua vài câu hỏi ngắn."
+      :welcomeText="editTarget ? `Tôi sẽ giúp bạn chỉnh sửa Persona &quot;${editTarget.name}&quot;. Bạn muốn thay đổi điều gì?` : 'Xin chào! Tôi sẽ giúp bạn tạo một Persona dịch thuật cá nhân qua vài câu hỏi ngắn.'"
     >
       <template #after-messages>
         <QuickChips
@@ -59,7 +59,11 @@ const inputRef = ref(null)
 
 // ---- Lifecycle ----
 onMounted(async () => {
-  conversation.reset('interview')
+  if (props.editTarget) {
+    conversation.reset('edit', props.editTarget)
+  } else {
+    conversation.reset('interview')
+  }
   await startInterview()
 })
 
@@ -67,10 +71,9 @@ onMounted(async () => {
 async function startInterview() {
   // Let AI generate the first greeting question
   try {
-    const messages = conversation.getMessages()
-    // Add a trigger to get the first message
+    // Add a trigger message appropriate to the mode
     if (props.editTarget) {
-      conversation.addMessage('user', `Xin chào, tôi muốn chỉnh sửa Persona dịch thuật hiện tại tên là "${props.editTarget.name}". Ngôn ngữ đích đang là ${props.editTarget.target_lang}, chuyên ngành ${props.editTarget.domain}, văn phong ${props.editTarget.style}. Hãy hỏi tôi muốn thay đổi điều gì.`)
+      conversation.addMessage('user', 'Xin chào, tôi muốn chỉnh sửa Persona này. Hãy hỏi tôi muốn thay đổi điều gì.')
     } else {
       conversation.addMessage('user', 'Xin chào, tôi muốn tạo Persona dịch thuật mới.')
     }

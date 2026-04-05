@@ -15,8 +15,17 @@ export function useOllama() {
    * Initialize or re-initialize the Ollama client
    */
   function initClient(baseUrl = 'http://localhost:11434', model = 'translategemma:latest') {
-    console.log(`[useOllama] Initializing client: ${baseUrl}, model: ${model}`)
-    client.value = new OllamaClient(baseUrl, model)
+    // Validate inputs
+    const safeUrl = (baseUrl && baseUrl.trim()) ? baseUrl.trim() : 'http://localhost:11434'
+    const safeModel = (model && model.trim()) ? model.trim() : 'translategemma:latest'
+    console.log(`[useOllama] Initializing client: ${safeUrl}, model: ${safeModel}`)
+
+    // Cancel any ongoing stream before replacing client
+    if (client.value) {
+      client.value.cancelStream()
+    }
+
+    client.value = new OllamaClient(safeUrl, safeModel)
     checkConnection()
   }
 

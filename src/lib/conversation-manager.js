@@ -26,7 +26,7 @@ LUẬT BẮT BUỘC:
    - "Dịch bình thường" → "Bạn muốn phong cách học thuật chuyên nghiệp, thân mật kiểu Gen Z, hay cực kỳ ngắn gọn? Mỗi kiểu sẽ cho ra bản dịch rất khác nhau."
 4. Giữ giọng văn thân thiện, ngắn gọn, chuyên nghiệp.
 5. Khi ĐÃ ĐỦ cả 4 thông tin, tóm tắt Persona cho người dùng xác nhận, rồi kết thúc CHÍNH XÁC bằng:
-   [UPDATE_PERSONA: {"name": "tên_gợi_ý", "target_lang": "...", "domain": "...", "style": "...", "config": {"type": "local_hoặc_cloud", "url": "url_nếu_có"}}]
+   [UPDATE_PERSONA: {"name": "tên_gợi_ý", "target_lang": "...", "domain": "...", "style": "...", "config": {"type": "local_hoặc_cloud", "url": "url_nếu_có", "model": "tên_model"}}]
 
 Chuỗi [UPDATE_PERSONA: {...}] PHẢI nằm ở cuối message và JSON phải hợp lệ.`
 
@@ -83,12 +83,46 @@ Nếu người dùng yêu cầu thay đổi persona (VD: "đổi phong cách", "
     return []
   }
 
+  /**
+   * Build a system prompt for editing an existing persona
+   * AI knows current values and only updates what the user wants to change
+   */
+  static buildEditSystemPrompt(persona) {
+    const configInfo = persona.config?.type === 'cloud'
+      ? `Cloud API (url: ${persona.config.url || 'chưa có'})`
+      : `Local Ollama (${persona.config?.url || 'http://localhost:11434'}, model: ${persona.config?.model || 'translategemma:latest'})`
+
+    return `Bạn là "Persona Agent", chuyên gia chỉnh sửa hồ sơ dịch thuật. Người dùng muốn CHỈNH SỬA một Persona hiện có.
+
+PERSONA HIỆN TẠI:
+- Tên: ${persona.name}
+- Ngôn ngữ đích: ${persona.target_lang}
+- Lĩnh vực: ${persona.domain}
+- Phong cách: ${persona.style}
+- Kết nối: ${configInfo}
+
+NHIỆM VỤ:
+1. Hỏi người dùng muốn thay đổi điều gì (có thể là 1 hoặc nhiều trường).
+2. Chỉ hỏi về những trường mà người dùng muốn thay đổi.
+3. Giữ nguyên tất cả các trường KHÔNG được đề cập thay đổi.
+4. Khi đã đủ thông tin, tóm tắt lại Persona mới và kết thúc CHÍNH XÁC bằng:
+   [UPDATE_PERSONA: {"name": "...", "target_lang": "...", "domain": "...", "style": "...", "config": {"type": "local_hoặc_cloud", "url": "url_nếu_có", "model": "tên_model"}}]
+
+LƯU Ý: JSON trong [UPDATE_PERSONA: ...] phải chứa ĐẦY ĐỦ 4 trường (kể cả những trường không thay đổi).
+Chuỗi [UPDATE_PERSONA: {...}] PHẢI nằm ở cuối message và JSON phải hợp lệ.`
+  }
+
   // ---- Methods ----
 
-  reset(mode = 'interview') {
+  reset(mode = 'interview', editTarget = null) {
     this.mode = mode
     this.messages = []
-    if (mode === 'interview') {
+    if (mode === 'edit' && editTarget) {
+      this.messages.push({
+        role: 'system',
+        content: ConversationManager.buildEditSystemPrompt(editTarget)
+      })
+    } else {
       this.messages.push({
         role: 'system',
         content: ConversationManager.INTERVIEW_SYSTEM_PROMPT
